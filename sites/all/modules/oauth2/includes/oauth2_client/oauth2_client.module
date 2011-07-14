@@ -1,0 +1,303 @@
+<?php
+// $Id: oauth2_client.module,v 1.1 2011/01/25 09:27:08 hswong3i Exp $
+
+/**
+ * @file
+ * The OAuth2.0 Client Identifer as Drupal node.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function oauth2_client_help($section, $arg) {
+  switch ($section) {
+    case 'admin/build/oauth2/oauth2_client':
+      $help = '<p>'. t("An <a href='!oauth2_client'>OAuth2.0 Client Identifer</a> contain the registed OAuth2.0 application information, including client_id, client_secret, redirect_uri and base_domain, etc.", array(
+        '!oauth2_client' => url('node/add/oauth2-client'),
+      )) .'</p>';
+      return $help;
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function oauth2_client_menu() {
+  $items = array();
+
+  $items['admin/build/oauth2/oauth2_client'] = array(
+    'title' => 'Clients',
+    'description' => 'List, add, and edit OAuth2.0 Client Identifer.',
+    'page callback' => 'oauth2_client_admin_callback',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'oauth2_client.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -8,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_node_info().
+ */
+function oauth2_client_node_info() {
+  return array(
+    'oauth2_client' => array(
+      'name' => t('OAuth2.0 Client Identifer'),
+      'module' => 'oauth2_client',
+      'description' => t('An <em>OAuth2.0 Client Identifer</em> contain the registed OAuth2.0 application information, including client_id, client_secret, redirect_uri and base_domain, etc.'),
+      'has_title' => TRUE,
+      'title_label' => t('Application Name'),
+      'has_body' => TRUE,
+      'body_label' => t('Description'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function oauth2_client_perm() {
+  return array(
+    'create oauth2_client',
+    'delete own oauth2_client',
+    'delete any oauth2_client',
+    'edit own oauth2_client',
+    'edit any oauth2_client',
+  );
+}
+
+/**
+ * Implementation of hook_access().
+ */
+function oauth2_client_access($op, $node, $account) {
+  if ($op == 'create') {
+    // Anonymous users cannot post even if they have the permission.
+    return user_access('create oauth2_client', $account) && $account->uid ? TRUE : NULL;
+  }
+
+  if ($op == 'update') {
+    if (user_access('edit any oauth2_client', $account) || (user_access('edit own oauth2_client', $account) && ($account->uid == $node->uid))) {
+      return TRUE;
+    }
+  }
+
+  if ($op == 'delete') {
+    if (user_access('delete any oauth2_client', $account) || (user_access('delete own oauth2_client', $account) && ($account->uid == $node->uid))) {
+      return TRUE;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_form().
+ */
+function oauth2_client_form(&$node) {
+  $type = node_get_types('type', $node);
+
+  if ($type->has_title) {
+    $form['title'] = array(
+      '#type' => 'textfield',
+      '#title' => check_plain($type->title_label),
+      '#required' => TRUE,
+      '#default_value' => $node->title,
+      '#maxlength' => 255,
+      '#weight' => -5,
+    );
+  }
+
+  if ($type->has_body) {
+    $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
+  }
+
+  $form['oauth2_client'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('OAuth2.0 settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  // Generate a random client_id.
+  if (!isset($node->client_id) || empty($node->client_id)) {
+    $node->client_id = md5(base64_encode(pack('N6', mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), uniqid())));
+  }
+  $form['oauth2_client']['client_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Application ID'),
+    '#description' => t('Your OAuth2.0 <em>client_id</em>.'),
+    '#value' => $node->client_id,
+    '#disabled' => TRUE,
+  );
+
+  // Generate a random client_secret.
+  if (!isset($node->client_secret) || empty($node->client_secret)) {
+    $node->client_secret = md5(base64_encode(pack('N6', mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), uniqid())));
+  }
+  $form['oauth2_client']['client_secret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Application Secret'),
+    '#description' => t('Your OAuth2.0 <em>client_secret</em>.'),
+    '#value' => $node->client_secret,
+    '#disabled' => TRUE,
+  );
+
+  $form['oauth2_client']['redirect_uri'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Site URL'),
+    '#description' => t('Your site\'s URL.'),
+    '#default_value' => isset($node->redirect_uri) ? $node->redirect_uri : '',
+    '#required' => TRUE,
+  );
+
+  $form['oauth2_client']['base_domain'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Site Domain'),
+    '#description' => t('If set, Drupal will enable authentication on all subdomains (e.g., "example.com" will enable *.example.com).'),
+    '#default_value' => isset($node->base_domain) ? $node->base_domain : '',
+  );
+
+  return $form;
+}
+
+/**
+ * Implementation of hook_insert().
+ */
+function oauth2_client_insert($node) {
+  drupal_write_record('oauth2_clients', $node);
+}
+
+/**
+ * Implementation of hook_update().
+ */
+function oauth2_client_update($node) {
+  // if this is a new node or we're adding a new revision,
+  if ($node->revision) {
+    oauth2_client_insert($node);
+  }
+  else {
+    drupal_write_record('oauth2_clients', $node, 'vid');
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function oauth2_client_nodeapi(&$node, $op, $teaser, $page) {
+  switch ($op) {
+    case 'delete revision':
+      // Notice that we're matching a single revision based on the node's vid.
+      db_query("DELETE FROM {oauth2_clients} WHERE vid = %d", $node->vid);
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_delete().
+ */
+function oauth2_client_delete(&$node) {
+  // Notice that we're matching all revision, by using the node's nid.
+  db_query("DELETE FROM {oauth2_clients} WHERE nid = %d", $node->nid);
+}
+
+/**
+ * Implementation of hook_load().
+ */
+function oauth2_client_load(&$node) {
+  $additions = db_fetch_object(db_query("SELECT client_id, client_secret, redirect_uri, base_domain FROM {oauth2_clients} WHERE vid = %d", $node->vid));
+  return $additions;
+}
+
+/**
+ * Implementation of hook_view().
+ */
+function oauth2_client_view($node, $teaser = FALSE, $page = FALSE) {
+  $node = node_prepare($node, $teaser);
+
+  $node->content['client_id'] = array(
+    '#value' => theme('oauth2_client_client_id', $node->client_id),
+    '#weight' => -10,
+  );
+  $node->content['client_secret'] = array(
+    '#value' => theme('oauth2_client_client_secret', $node->client_secret),
+    '#weight' => -9,
+  );
+  $node->content['redirect_uri'] = array(
+    '#value' => theme('oauth2_client_redirect_uri', $node->redirect_uri),
+    '#weight' => -8,
+  );
+  $node->content['base_domain'] = array(
+    '#value' => theme('oauth2_client_base_domain', $node->base_domain),
+    '#weight' => -7,
+  );
+
+  return $node;
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function oauth2_client_theme() {
+  return array(
+    'oauth2_client_client_id' => array(
+      'arguments' => array('client_id' => '', 'teaser' => 0, 'page' => 0),
+    ),
+    'oauth2_client_client_secret' => array(
+      'arguments' => array('client_secret' => '', 'teaser' => 0, 'page' => 0),
+    ),
+    'oauth2_client_redirect_uri' => array(
+      'arguments' => array('redirect_uri' => '', 'teaser' => 0, 'page' => 0),
+    ),
+    'oauth2_client_base_domain' => array(
+      'arguments' => array('base_domain' => '', 'teaser' => 0, 'page' => 0),
+    ),
+  );
+}
+
+/**
+ * Returns HTML for field client_id.
+ *
+ * @ingroup themeable
+ */
+function theme_oauth2_client_client_id($client_id, $teaser = 0, $page = 0) {
+  $output = '<div class="oauth2_client-info client_id">';
+  $output .= t('Application ID: @client_id', array('@client_id' => $client_id));
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Returns HTML for field client_secret.
+ *
+ * @ingroup themeable
+ */
+function theme_oauth2_client_client_secret($client_secret, $teaser = 0, $page = 0) {
+  $output = '<div class="oauth2_client-info client_secret">';
+  $output .= t('Application Secret: @client_secret', array('@client_secret' => $client_secret));
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Returns HTML for field redirect_uri.
+ *
+ * @ingroup themeable
+ */
+function theme_oauth2_client_redirect_uri($redirect_uri, $teaser = 0, $page = 0) {
+  $output = '<div class="oauth2_client-info redirect_uri">';
+  $output .= t('Site URL: @redirect_uri', array('@redirect_uri' => $redirect_uri));
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Returns HTML for field base_domain.
+ *
+ * @ingroup themeable
+ */
+function theme_oauth2_client_base_domain($base_domain, $teaser = 0, $page = 0) {
+  $output = '<div class="oauth2_client-info base_domain">';
+  $output .= t('Site Domain: @base_domain', array('@base_domain' => empty($base_domain) ? t('<none>') : $base_domain));
+  $output .= '</div>';
+  return $output;
+}

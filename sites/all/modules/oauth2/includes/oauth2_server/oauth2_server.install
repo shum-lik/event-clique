@@ -1,0 +1,83 @@
+<?php
+// $Id: oauth2_server.install,v 1.1 2011/01/25 09:27:09 hswong3i Exp $
+
+/**
+ * @file
+ * OAuth2.0 Server Identifer install and uninstall code.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function oauth2_server_install() {
+  drupal_install_schema('oauth2_server');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function oauth2_server_uninstall() {
+  drupal_uninstall_schema('oauth2_server');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function oauth2_server_schema() {
+  $schema = array();
+
+  $schema['oauth2_servers'] = array(
+    'description' => t('OAuth2.0 server indentifier information as Drupal node.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The primary identifier for a node.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'vid' => array(
+        'description' => 'The current {node_revisions}.vid version identifier.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'server_id' => array(
+        'description' => t('The server identifier.'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ),
+      'client_id' => array(
+        'description' => t('Your registered client identifier.'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ),
+      'client_secret' => array(
+        'description' => t('Your registered client password.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'base_uri' => array(
+        'description' => t('The authorization server\'s HTTP base URI, typically to the front page.'),
+        'type' => 'text',
+      ),
+      'authorize_uri' => array(
+        'description' => t('The authorization server\'s HTTP endpoint capable of authenticating the end-user and obtaining authorization. Absolute path or path relative to base URI.'),
+        'type' => 'text',
+      ),
+      'access_token_uri' => array(
+        'description' => t('The authorization server\'s HTTP endpoint capable of issuing tokens and refreshing expired tokens. Absolute path or path relative to base URI.'),
+        'type' => 'text',
+      ),
+    ),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+    'primary key' => array('vid'),
+  );
+
+  return $schema;
+}

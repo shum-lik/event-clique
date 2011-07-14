@@ -1,0 +1,85 @@
+/* @override http://local.greenirene.com/sites/all/modules/custom/simple_fbwall/simple_fbwall.css?d */
+
+
+/* Attempt to prevent other CSS inheritance.
+   Themer can override these by adding more specificity */
+table#simple-fbwall-boxy tr, table#simple-fbwall-boxy td, table#simple-fbwall-boxy th, table#simple-fbwall-boxy tbody, table#simple-fbwall-boxy tfoot, table#simple-fbwall-boxy thead {
+	padding: 0;
+	margin: 0;
+	border: none;
+}
+
+table#simple-fbwall-boxy .title-bar {
+	background: #3c5998;
+}
+
+table#simple-fbwall-boxy h2 {
+	font-weight: bold;
+}
+
+table#simple-fbwall-boxy tr {
+	display: inherit;
+	background: none;
+}
+
+table#simple-fbwall-boxy {
+	background: none;
+	border: none;
+}
+
+table#simple-fbwall-boxy { 
+	width: auto; 
+	background-color: transparent; 
+}
+
+div#simple_fbwall_dialog { 
+	width: 650px; 
+	height: 350px; 
+	overflow: auto; 
+}
+
+div#simple_fbwall_loading { 
+	text-align: center; 
+	padding-top: 140px; 
+}
+
+div#simple_fbwall_image img { 
+	width: 160px; 
+	height: auto; 
+}
+
+div#simple_fbwall_image { 
+	width: 160px; 
+	margin-right: 10px; 
+	float: left; 
+}
+
+div#simple_fbwall_form_wrapper { 
+	width: 460px; 
+	border-left: 1px solid #777777; 
+	padding-left: 10px; 
+	float: left; 
+}
+
+div#simple_fbwall_form_wrapper textarea { 
+	width: 100%; 
+}
+
+div#fb_submit_wrapper {
+	border: 1px solid #29447e; 
+	display: block; 
+	float: left; 
+	cursor: pointer;
+}
+
+form.simple_fbwall_button_form input.simple_fbwall_button, input#simple_fbwall_submit {
+	background: #5d76aa url(icon-fb-small.png) no-repeat 7px 5px;
+	border: none;
+	border-top: 1px solid #8a9cc2;
+	height: 23px;
+	margin: 0;
+	font-size: 12px;
+	color: #fff;
+	font-weight: bold;
+	padding: 0px 4px 0px 20px;
+}

@@ -1,0 +1,12 @@
+; $Id: simple_fbwall.info,v 1.1 2011/01/24 14:48:32 FilmKnurd Exp $ 
+name = Simple FaceBook Wall Post
+description = A basic utility to post to a FaceBook wall
+package = Astonish
+version = 6.x-1.0
+core = 6.x
+; Information added by drupal.org packaging script on January 1, 1970 - 00:00
+version = "6.x-1.0-beta1"
+core = "6.x"
+project = "simple_fbwall"
+datestamp = "1295881617"
+

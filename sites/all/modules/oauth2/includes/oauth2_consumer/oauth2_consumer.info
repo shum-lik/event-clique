@@ -1,0 +1,14 @@
+; $Id: oauth2_consumer.info,v 1.1 2011/01/25 09:27:08 hswong3i Exp $
+name = "OAuth2.0 Consumer Support"
+description = "Extend OAuth2.0 Server Identifer with consumer support."
+package = "OAuth2.0"
+dependencies[] = oauth2_server
+core = 6.x
+php = 5.2
+
+; Information added by drupal.org packaging script on January 1, 1970 - 00:00
+version = "6.x-1.0-alpha1"
+core = "6.x"
+project = "oauth2"
+datestamp = "1295948016"
+

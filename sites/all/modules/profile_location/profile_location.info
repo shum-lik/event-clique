@@ -1,0 +1,14 @@
+; $Id: profile_location.info,v 1.1.4.2 2009/07/11 21:02:00 bacteriaman Exp $
+name = Profile Location
+description = Adds dynamic country and state selects to the core profile module.
+dependencies[] = profile
+core = 6.x
+
+
+
+; Information added by drupal.org packaging script on 2011-01-01
+version = "6.x-1.4"
+core = "6.x"
+project = "profile_location"
+datestamp = "1293848761"
+

@@ -1,0 +1,3 @@
+; $Id$
+name = Imagecache Profile Pictures
+description = Utilizes imagecache presets for user profile pictures.

@@ -1,0 +1,11 @@
+; $Id: friendconnect.info,v 1.1 2009/05/12 03:09:50 davereid Exp $
+name = Google Friend Connect
+description = "Allow visitors to access your site using Google Friend Connect."
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-01-20
+version = "6.x-1.0-alpha1"
+core = "6.x"
+project = "friendconnect"
+datestamp = "1263956413"
+

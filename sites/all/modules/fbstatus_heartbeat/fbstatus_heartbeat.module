@@ -1,0 +1,65 @@
+<?php
+/**
+* Implements hook_facebook_status_refresh_selectors().
+*/
+function fbstatus_heartbeat_facebook_status_refresh_selectors($account) {
+  return array(
+    '.pane-heartbeat-privateheartbeat',
+  );
+}
+
+/**
+* Implementation of hook_token_list().
+*/
+function fbstatus_heartbeat_token_list($type = 'all') {
+
+  $tokens = array();
+  
+  if ($type == 'user') {
+    $tokens['user']['heartbeat-actor-picture-medium'] = t("Medium avatar (using 'user_pictures_medium' imagecache preset) of the actor with a link to it leading to the user account page.");
+    $tokens['user']['heartbeat-actor-picture-small'] = t("Small avatar (using 'user_pictures_medium' imagecache preset) of the actor with a link to it leading to the user account page.");
+  }
+  
+  return $tokens;
+}
+
+/**
+ * Implementation of hook_token_values().
+ */
+function fbstatus_heartbeat_token_values($type, $object = NULL, $options = array()) {
+
+  $values = array();
+  
+  switch ($type) {
+    case 'user':
+      if ($object->uid) {
+        $account = user_load($object->uid);
+        
+        if (module_exists('imagecache_profiles')) {
+          $user_realname = module_exists('realname') ? realname_make_name($account) : $account->name;
+          $alt = t("@user's picture", array('@user' => $user_realname));
+          $title = t("View @user's profile.", array('@user' => $user_realname));
+          
+          $values['heartbeat-actor-picture-medium'] = l(theme('imagecache', 'user_pictures_medium', $account->picture, $alt, $title), 'user/' . $account->uid, array('html' => TRUE));
+          $values['heartbeat-actor-picture-small'] = l(theme('imagecache', 'user_pictures_small', $account->picture, $alt, $title), 'user/' . $account->uid, array('html' => TRUE));
+        }
+        else {
+          $values['heartbeat-actor-picture-medium'] = l(theme('user_picture', $account->picture), 'user/' . $account->uid, array('html' => TRUE));
+          $values['heartbeat-actor-picture-small'] = $values['heartbeat-actor-picture-medium'];
+        }
+      }
+      else {
+        $anon = variable_get('anonymous', t('Anonymous'));
+        $values['heartbeat-user-picture-medium'] = '<span class="user-picture">'. $anon .'</span>';
+        $values['heartbeat-user-picture-small'] = $values['heartbeat-user-picture-medium'];
+      }
+      
+      break;
+    
+    case 'global':
+      
+      break;
+  }
+
+  return $values;
+}

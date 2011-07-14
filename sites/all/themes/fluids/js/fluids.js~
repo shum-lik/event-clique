@@ -1,0 +1,32 @@
+$(document).ready(function(){
+  $('#primary-links ul li').hover(
+    function(){$(this).addClass('hover');},
+	function(){$(this).removeClass('hover');}
+  );
+  $('#block-right .block').corner();
+  
+  setCycle();
+  setJCarousel();
+  setCycleControl('.view-id-list_gallery_page.view-display-id-block_1','.view-id-list_gallery_page.view-display-id-block_2');
+});
+
+function setCycle(){
+	$('.jcycle-container').each(function(){
+      $(this).cycle({fx: 'fade'});
+	});
+}
+
+function setCycleControl(cycleName,controlName){
+  $(controlName+' .jcycle-control img').each(function(i){
+    $(this).click(function(){
+	  $(cycleName+' .jcycle-container').cycle(i);
+	});
+  })
+}
+
+function setJCarousel(){
+  if($('.jcarousel-container').length>0){
+    $('.jcarousel-container').jcarousel({visible:5});
+  }
+
+}

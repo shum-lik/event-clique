@@ -1,0 +1,392 @@
+<?php
+// $Id: oauth2_resource.module,v 1.1 2011/01/25 09:27:09 hswong3i Exp $
+
+/**
+ * @file
+ *  Link passport functionalities to services module.
+ */
+
+/**
+ * Implementation of hook_services_resources().
+ */
+function oauth2_resource_services_resources() {
+  return array(
+    'oauth2' => array(
+      'actions' => array(
+        'verifyAuthorizedScopes' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_verify_authorized_scopes',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'client_id',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'required_scope',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'uid',
+              'type' => 'int',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+        'getHiddenScopes' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_get_hidden_scopes',
+          'access callback' => 'services_access_menu',
+          'args' => array(),
+        ),
+        'getAuthorizedScopes' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_get_authorized_scopes',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'client_id',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'uid',
+              'type' => 'int',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+        'setAuthorizedScopes' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_set_authorized_scopes',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'client_id',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'scopes',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'uid',
+              'type' => 'int',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+        'unsetAuthorizedScopes' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_unset_authorized_scopes',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'client_id',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'scopes',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'uid',
+              'type' => 'int',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+        'expireSession' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_expire_session',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'sid',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+        'checkClientCredentials' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_check_client_credentials',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'client_id',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'client_secret',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => TRUE,
+              'default value' => NULL,
+            ),
+          ),
+        ),
+        'getRedirectUri' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_get_redirect_uri',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'client_id',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+        'getAccessToken' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_get_access_token',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'oauth_token',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+        'setAccessToken' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_set_access_token',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'oauth_token',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'client_id',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'expires',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'scope',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => TRUE,
+              'default value' => '',
+            ),
+            array(
+              'name' => 'uid',
+              'type' => 'int',
+              'source' => 'data',
+              'optional' => TRUE,
+              'default value' => 0,
+            ),
+            array(
+              'name' => 'sid',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => TRUE,
+              'default value' => '',
+            ),
+          ),
+        ),
+        'getSupportedScopes' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_get_supported_scopes',
+          'access callback' => 'services_access_menu',
+          'args' => array(),
+        ),
+        'getAuthCode' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_get_auth_code',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'code',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+        'setAuthCode' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_set_auth_code',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'code',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'client_id',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'redirect_uri',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'expires',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'scope',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => TRUE,
+              'default value' => '',
+            ),
+            array(
+              'name' => 'uid',
+              'type' => 'int',
+              'source' => 'data',
+              'optional' => TRUE,
+              'default value' => 0,
+            ),
+            array(
+              'name' => 'sid',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => TRUE,
+              'default value' => '',
+            ),
+          ),
+        ),
+        'checkUserCredentials' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_check_user_credentials',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'client_id',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'username',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'password',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+        'getRefreshToken' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_get_refresh_token',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'refresh_token',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+        'setRefreshToken' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_set_refresh_token',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'refresh_token',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'client_id',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'expires',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+            array(
+              'name' => 'scope',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => TRUE,
+              'default value' => '',
+            ),
+            array(
+              'name' => 'uid',
+              'type' => 'int',
+              'source' => 'data',
+              'optional' => TRUE,
+              'default value' => 0,
+            ),
+            array(
+              'name' => 'sid',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => TRUE,
+              'default value' => '',
+            ),
+          ),
+        ),
+        'unsetRefreshToken' => array(
+          'file' => array('file' => 'inc', 'module' => 'oauth2_resource'),
+          'callback' => 'oauth2_resource_unset_refresh_token',
+          'access callback' => 'services_access_menu',
+          'args' => array(
+            array(
+              'name' => 'refresh_token',
+              'type' => 'string',
+              'source' => 'data',
+              'optional' => FALSE,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}

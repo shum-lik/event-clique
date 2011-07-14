@@ -1,0 +1,13 @@
+name = Facebook-style Statuses - Heartbeat
+description = "Custom hooks for Facebook-style Statuses, Heartbeat, and Imagecache Profile Pictures integration."
+dependencies[] = heartbeat
+dependencies[] = facebook_status
+dependencies[] = imagecache_profiles
+core = 6.x
+
+; Information added by drupal.org packaging script on 2011-06-20
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "fbstatus_heartbeat"
+datestamp = "1308574800"
+

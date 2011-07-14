@@ -1,0 +1,30 @@
+; $Id: fluids.info,v 1.5 2007/07/01 23:27:32 goba Exp $
+name = Fluids
+description = Fluid width theme (default).
+version = VERSION
+core = 6.x
+engine = phptemplate
+
+stylesheets[all][] = js/fancybox/jquery.fancybox-1.3.4.css
+stylesheets[all][] = fluids.css
+
+scripts[] = js/jquery.corner.js
+scripts[] = js/jquery.cycle.all.min.js
+scripts[] = js/jquery.jcarousel.min.js
+scripts[] = js/fancybox/jquery.fancybox-1.3.4.js
+scripts[] = js/easySlider1.7.js
+scripts[] = js/fluids.js
+
+
+regions[front_block_top] = Front Top Block
+regions[front_block_bottom] = Front Bottom Block
+regions[block_left] = Left Block
+regions[navigation] = Navigation
+regions[block_right] = Right Block
+regions[block_middle] = Middle Block
+regions[header_left] = Left Header
+regions[header_right] = Right Header
+regions[custom_footer] = Customized Footer
+
+
+

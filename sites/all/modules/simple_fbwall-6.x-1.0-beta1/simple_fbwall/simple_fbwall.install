@@ -1,0 +1,16 @@
+<?php
+
+// $Id: simple_fbwall.install,v 1.1 2011/01/24 14:48:32 FilmKnurd Exp $
+
+/**
+ * Implementation of hook_enable().
+ */
+function simple_fbwall_enable() {
+  drupal_set_message('You have installed Simple FB Wall. Be sure to ' . 
+          l('download the boxy library', 'http://plugins.jquery.com/files/boxy-0.1.4.zip') . 
+          'and place the contents into your libraries folder (e.g. sites/all/libraries)');
+  
+  drupal_set_message(t('After installing Boxy, Go to ' . 
+          l('admin/settings/simple_fbwall', 'admin/settings/simple_fbwall') . 
+          ' to configure this module'));
+}

@@ -1,0 +1,365 @@
+<?php
+// $Id: oauth2_server.module,v 1.1 2011/01/25 09:27:09 hswong3i Exp $
+
+/**
+ * @file
+ * The OAuth2.0 Server Identifer as Drupal node.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function oauth2_server_help($section, $arg) {
+  switch ($section) {
+    case 'admin/build/oauth2/oauth2_server':
+      $help = '<p>'. t("An <a href='!oauth2_server'>OAuth2.0 Server Identifer</a> contain the target OAuth2.0 provider information, including client_id, client_secret, authorize_uri and access_token_uri, etc.", array(
+        '!oauth2_server' => url('node/add/oauth2-server'),
+      )) .'</p>';
+      return $help;
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function oauth2_server_menu() {
+  $items = array();
+
+  $items['admin/build/oauth2/oauth2_server'] = array(
+    'title' => 'Servers',
+    'description' => 'List, add, and edit OAuth2.0 Server Identifer.',
+    'page callback' => 'oauth2_server_admin_callback',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'oauth2_server.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_node_info().
+ */
+function oauth2_server_node_info() {
+  return array(
+    'oauth2_server' => array(
+      'name' => t('OAuth2.0 Server Identifer'),
+      'module' => 'oauth2_server',
+      'description' => t('An <em>OAuth2.0 Server Identifer</em> contain the target OAuth2.0 provider information, including client_id, client_secret, authorize_uri and access_token_uri, etc.'),
+      'has_title' => TRUE,
+      'title_label' => t('Server Name'),
+      'has_body' => TRUE,
+      'body_label' => t('Description'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function oauth2_server_perm() {
+  return array(
+    'create oauth2_server',
+    'delete own oauth2_server',
+    'delete any oauth2_server',
+    'edit own oauth2_server',
+    'edit any oauth2_server',
+  );
+}
+
+/**
+ * Implementation of hook_access().
+ */
+function oauth2_server_access($op, $node, $account) {
+  if ($op == 'create') {
+    // Anonymous users cannot post even if they have the permission.
+    return user_access('create oauth2_server', $account) && $account->uid ? TRUE : NULL;
+  }
+
+  if ($op == 'update') {
+    if (user_access('edit any oauth2_server', $account) || (user_access('edit own oauth2_server', $account) && ($account->uid == $node->uid))) {
+      return TRUE;
+    }
+  }
+
+  if ($op == 'delete') {
+    if (user_access('delete any oauth2_server', $account) || (user_access('delete own oauth2_server', $account) && ($account->uid == $node->uid))) {
+      return TRUE;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_form().
+ */
+function oauth2_server_form(&$node) {
+  $type = node_get_types('type', $node);
+
+  if ($type->has_title) {
+    $form['title'] = array(
+      '#type' => 'textfield',
+      '#title' => check_plain($type->title_label),
+      '#required' => TRUE,
+      '#default_value' => $node->title,
+      '#maxlength' => 255,
+      '#weight' => -5,
+    );
+  }
+
+  if ($type->has_body) {
+    $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
+  }
+
+  $form['oauth2_server'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('OAuth2.0 settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['oauth2_server']['server_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Server ID'),
+    '#description' => t('The OAuth2.0 <em>server_id</em>.'),
+    '#default_value' => isset($node->server_id) ? $node->server_id : '',
+    '#required' => TRUE,
+  );
+
+  $form['oauth2_server']['base_uri'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Base URI'),
+    '#description' => t('The authorization server\'s HTTP base URI, typically to the front page.'),
+    '#default_value' => isset($node->base_uri) ? $node->base_uri : '',
+    '#required' => TRUE,
+  );
+
+  $form['oauth2_server']['client_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Application ID'),
+    '#description' => t('Your registered OAuth2.0 <em>client_id</em>.'),
+    '#default_value' => isset($node->client_id) ? $node->client_id : '',
+    '#required' => FALSE,
+  );
+
+  $form['oauth2_server']['client_secret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Application Secret'),
+    '#description' => t('Your registered OAuth2.0 <em>client_secret</em>.'),
+    '#default_value' => isset($node->client_secret) ? $node->client_secret : '',
+    '#required' => FALSE,
+  );
+
+  $form['oauth2_server']['authorize_uri'] = array(
+    '#type' => 'textfield',
+    '#title' => t('End-user authorization endpoint'),
+    '#description' => t('The authorization server\'s HTTP endpoint capable of authenticating the end-user and obtaining authorization. Absolute path or path relative to base URI.'),
+    '#default_value' => isset($node->authorize_uri) ? $node->authorize_uri : '',
+    '#required' => FALSE,
+  );
+
+  $form['oauth2_server']['access_token_uri'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Token endpoint'),
+    '#description' => t('The authorization server\'s HTTP endpoint capable of issuing tokens and refreshing expired tokens. Absolute path or path relative to base URI.'),
+    '#default_value' => isset($node->access_token_uri) ? $node->access_token_uri : '',
+    '#required' => FALSE,
+  );
+
+  return $form;
+}
+
+/**
+ * Implementation of hook_validate().
+ */
+function oauth2_server_validate($node) {
+  $pattern = '/^[a-z0-9-_]{3,64}$/i';
+  if (!empty($node->server_id) && !preg_match($pattern, $node->server_id)) {
+    form_set_error('server_id', t('Server ID should be alphanumeric strings with hyphens and underscores, 3-64 characters long.'));
+  }
+
+  // Ensure no duplicate server_id.
+  $result = db_result(db_query("SELECT COUNT(*) FROM {oauth2_servers} AS osrv INNER JOIN {node} AS n ON osrv.vid = n.vid WHERE osrv.server_id = '%s' AND n.nid <> %d", $node->server_id, $node->nid));
+  if ($result != 0) {
+    form_set_error('server_id', t('This Server ID had beed used by other server identifer.'));
+  }
+}
+
+/**
+ * Implementation of hook_insert().
+ */
+function oauth2_server_insert($node) {
+  drupal_write_record('oauth2_servers', $node);
+}
+
+/**
+ * Implementation of hook_update().
+ */
+function oauth2_server_update($node) {
+  if ($node->revision) {
+    oauth2_server_insert($node);
+  }
+  else {
+    drupal_write_record('oauth2_servers', $node, 'vid');
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function oauth2_server_nodeapi(&$node, $op, $teaser, $page) {
+  switch ($op) {
+    case 'delete revision':
+      // Notice that we're matching a single revision based on the node's vid.
+      db_query("DELETE FROM {oauth2_servers} WHERE vid = %d", $node->vid);
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_delete().
+ */
+function oauth2_server_delete(&$node) {
+  // Notice that we're matching all revision, by using the node's nid.
+  db_query("DELETE FROM {oauth2_servers} WHERE nid = %d", $node->nid);
+}
+
+/**
+ * Implementation of hook_load().
+ */
+function oauth2_server_load(&$node) {
+  $additions = db_fetch_object(db_query("SELECT server_id, client_id, client_secret, base_uri, authorize_uri, access_token_uri FROM {oauth2_servers} WHERE vid = %d", $node->vid));
+  return $additions;
+}
+
+/**
+ * Implementation of hook_view().
+ */
+function oauth2_server_view($node, $teaser = FALSE, $page = FALSE) {
+  $node = node_prepare($node, $teaser);
+
+  $node->content['server_id'] = array(
+    '#value' => theme('oauth2_server_server_id', $node->server_id),
+    '#weight' => -10,
+  );
+  $node->content['base_uri'] = array(
+    '#value' => theme('oauth2_server_base_uri', $node->base_uri),
+    '#weight' => -9,
+  );
+  $node->content['client_id'] = array(
+    '#value' => theme('oauth2_server_client_id', $node->client_id),
+    '#weight' => -8,
+  );
+  $node->content['client_secret'] = array(
+    '#value' => theme('oauth2_server_client_secret', $node->client_secret),
+    '#weight' => -7,
+  );
+  $node->content['authorize_uri'] = array(
+    '#value' => theme('oauth2_server_authorize_uri', $node->authorize_uri),
+    '#weight' => -6,
+  );
+  $node->content['access_token_uri'] = array(
+    '#value' => theme('oauth2_server_access_token_uri', $node->access_token_uri),
+    '#weight' => -5,
+  );
+
+  return $node;
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function oauth2_server_theme() {
+  return array(
+    'oauth2_server_server_id' => array(
+      'arguments' => array('server_id' => '', 'teaser' => 0, 'page' => 0),
+    ),
+    'oauth2_server_base_uri' => array(
+      'arguments' => array('base_uri' => '', 'teaser' => 0, 'page' => 0),
+    ),
+    'oauth2_server_client_id' => array(
+      'arguments' => array('client_id' => '', 'teaser' => 0, 'page' => 0),
+    ),
+    'oauth2_server_client_secret' => array(
+      'arguments' => array('client_secret' => '', 'teaser' => 0, 'page' => 0),
+    ),
+    'oauth2_server_authorize_uri' => array(
+      'arguments' => array('authorize_uri' => '', 'teaser' => 0, 'page' => 0),
+    ),
+    'oauth2_server_access_token_uri' => array(
+      'arguments' => array('access_token_uri' => '', 'teaser' => 0, 'page' => 0),
+    ),
+  );
+}
+
+/**
+ * Returns HTML for field server_id.
+ *
+ * @ingroup themeable
+ */
+function theme_oauth2_server_server_id($server_id, $teaser = 0, $page = 0) {
+  $output = '<div class="oauth2_server-info server_id">';
+  $output .= t('Server ID: @server_id', array('@server_id' => $server_id));
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Returns HTML for field base_uri.
+ *
+ * @ingroup themeable
+ */
+function theme_oauth2_server_base_uri($base_uri, $teaser = 0, $page = 0) {
+  $output = '<div class="oauth2_server-info base_uri">';
+  $output .= t('Base URI: @base_uri', array('@base_uri' => $base_uri));
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Returns HTML for field client_id.
+ *
+ * @ingroup themeable
+ */
+function theme_oauth2_server_client_id($client_id, $teaser = 0, $page = 0) {
+  $output = '<div class="oauth2_server-info client_id">';
+  $output .= t('Application ID: @client_id', array('@client_id' => $client_id));
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Returns HTML for field client_secret.
+ *
+ * @ingroup themeable
+ */
+function theme_oauth2_server_client_secret($client_secret, $teaser = 0, $page = 0) {
+  $output = '<div class="oauth2_server-info client_secret">';
+  $output .= t('Application Secret: @client_secret', array('@client_secret' => $client_secret));
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Returns HTML for field authorize_uri.
+ *
+ * @ingroup themeable
+ */
+function theme_oauth2_server_authorize_uri($authorize_uri, $teaser = 0, $page = 0) {
+  $output = '<div class="oauth2_server-info authorize_uri">';
+  $output .= t('End-user authorization endpoint: @authorize_uri', array('@authorize_uri' => $authorize_uri));
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Returns HTML for field access_token_uri.
+ *
+ * @ingroup themeable
+ */
+function theme_oauth2_server_access_token_uri($access_token_uri, $teaser = 0, $page = 0) {
+  $output = '<div class="oauth2_server-info access_token_uri">';
+  $output .= t('Token endpoint: @access_token_uri', array('@access_token_uri' => $access_token_uri));
+  $output .= '</div>';
+  return $output;
+}

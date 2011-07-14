@@ -1,0 +1,10 @@
+<?php
+// $Id: hs_field_selector.module,v 1.1 2010/02/03 07:20:33 crea Exp $
+
+/**
+ * @file
+ * Hierarchical Select Field Selector module.
+ * 
+ * Empty, to save memory. To use, include hs_field_selector.inc
+ */
+

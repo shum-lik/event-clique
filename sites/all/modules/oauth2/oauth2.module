@@ -1,0 +1,196 @@
+<?php
+// $Id: oauth2.module,v 1.1 2011/01/25 09:27:08 hswong3i Exp $
+
+/**
+ * @file
+ * OAuth2.0 Core module, provide oauth2-php library linkage and default
+ * setup, etc.
+ */
+
+/**
+ * Recommend OAuth2.0 library version.
+ */
+define('OAUTH2_RECOMMEND_VERSION', 'Revision: 3d57d095d6');
+
+/**
+ * The default path of oauth2-php library path.
+ */
+define('OAUTH2_DEFAULT_LIBRARY_PATH', 'sites/all/libraries/oauth2-php');
+
+/**
+ * The default OAuth2.0 provider mode, DrupalOAuth2 or DrupalOAuth2Proxy.
+ */
+define('OAUTH2_DEFAULT_PROVIDER_MODE', 'DrupalOAuth2');
+
+/**
+ * Implementation of hook_help().
+ */
+function oauth2_help($section, $arg) {
+  switch ($section) {
+    case 'admin/build/oauth2':
+      $help = '<p>'. t("To use this module you'll need to <a href='!download-link'>download the library</a> from the <a href='!info-link'>oauth2-php website</a> and extract the contents into the  module's oauth2-php directory. Currently, the recommended version of the oauth2-php library is %recommended-version.", array(
+        '!download-link' => url('http://code.google.com/p/oauth2-php/downloads/list'),
+        '!info-link' => url('http://code.google.com/p/oauth2-php/'),
+        '%recommended-version' => OAUTH2_RECOMMEND_VERSION
+      )) .'</p>';
+      return $help;
+  }
+}
+
+/**
+ * Implementation hook_autoload_info().
+ */
+function oauth2_autoload_info() {
+  $library_path = NULL;
+
+  $oauth2_path = variable_get('oauth2_library_path', OAUTH2_DEFAULT_LIBRARY_PATH);
+  if (!$library_path && file_exists("$oauth2_path/lib/OAuth2.inc")) {
+    $library_path = $oauth2_path;
+  }
+
+  $module_path = drupal_get_path('module', 'oauth2');
+  if (!$library_path && file_exists("$module_path/oauth2-php/lib/OAuth2.inc")) {
+    $library_path = $module_path;
+  }
+
+  if (function_exists('libraries_get_path')) {
+    $libraries_get_path = libraries_get_path('oauth2-php');
+    if (!$library_path && file_exists("$libraries_get_path/lib/OAuth2.inc")) {
+      $library_path = $libraries_get_path;
+    }
+  }
+
+  if ($library_path) {
+    // Save the library path search result.
+    variable_set('oauth2_library_path', $library_path);
+
+    return array(
+      'OAuth2' => array('file' => 'lib/OAuth2.inc', 'file path' => $library_path),
+      'OAuth2Client' => array('file' => 'lib/OAuth2Client.inc', 'file path' => $library_path),
+      'OAuth2Exception' => array('file' => 'lib/OAuth2Exception.inc', 'file path' => $library_path),
+      'DrupalOAuth2' => array('file' => 'includes/DrupalOAuth2.inc'),
+      'DrupalOAuth2Client' => array('file' => 'includes/DrupalOAuth2Client.inc'),
+      'DrupalOAuth2Proxy' => array('file' => 'includes/DrupalOAuth2Proxy.inc'),
+    );
+  }
+  else {
+    drupal_set_message(t("The oauth2 module cannot find the oauth2-php library used to handle OAuth2.0 request. The site administrator will need to verify that it is installed and then update the <a href='!admin-settings-oauth2-php'>settings</a>.", array('!admin-settings-oauth2-php' => url('admin/build/oauth2'))), 'error', FALSE);
+    return FALSE;
+  }
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function oauth2_enable() {
+  // Flush the autoload caches so that our classes are registered.
+  autoload_flush_caches();
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function oauth2_menu() {
+  $items = array();
+
+  $items['admin/build/oauth2'] = array(
+    'title' => 'OAuth2.0',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oauth2_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'oauth2.admin.inc',
+  );
+
+  $items['admin/build/oauth2/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -99,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function oauth2_cron() {
+  if (variable_get('oauth2_provider_mode', OAUTH2_DEFAULT_PROVIDER_MODE) == 'DrupalOAuth2') {
+    // Clear legacy tokens.
+    db_query("DELETE FROM {oauth2_access_tokens} WHERE expires < %d", time());
+    db_query("DELETE FROM {oauth2_auth_codes} WHERE expires < %d", time());
+    db_query("DELETE FROM {oauth2_refresh_tokens} WHERE expires < %d", time());
+  }
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function oauth2_user($op, &$edit, &$account, $category = NULL) {
+  if ($op == 'logout') {
+    $session_id = session_id();
+    if (isset($account->sid)) {
+      $session_id = $account->sid;
+    }
+    oauth2_get_server()->expireSession($session_id);
+  }
+}
+
+/**
+ * Get an OAuth2.0 server-side instance with given class name.
+ *
+ * @param $class_name
+ *   (optional) The class name of target OAuth2.0 server-side class.
+ * @param $params
+ *   (optional) Additional parameters to pass to class construct.
+ *
+ * @return
+ *   The OAuth2.0 server-side instance based on $class or default setup.
+ */
+function oauth2_get_server($class_name = NULL, $params = array()) {
+  global $_oauth2_servers;
+
+  if ($class_name == NULL) {
+    $class_name = variable_get('oauth2_provider_mode', OAUTH2_DEFAULT_PROVIDER_MODE);
+  }
+
+  if (!isset($_oauth2_servers[$class_name]) || !$_oauth2_servers[$class_name] instanceof $class_name) {
+    // Manually include OAUth2.inc as we will reuse the predefined token
+    // lifetime default values.
+    require_once variable_get('oauth2_library_path', OAUTH2_DEFAULT_LIBRARY_PATH) . "/lib/OAuth2.inc";
+
+    $info = array(
+      'access_token_lifetime' => variable_get('oauth2_access_token_lifetime', OAUTH2_DEFAULT_ACCESS_TOKEN_LIFETIME),
+      'auth_code_lifetime' => variable_get('oauth2_auth_code_lifetime', OAUTH2_DEFAULT_AUTH_CODE_LIFETIME),
+      'refresh_token_lifetime' => variable_get('oauth2_refresh_token_lifetime', OAUTH2_DEFAULT_REFRESH_TOKEN_LIFETIME),
+      // We always display additional OAuth2.0 debug error message.
+      'display_error' => TRUE,
+    );
+    $params = array_merge($info, $params);
+    $_oauth2_servers[$class_name] = new $class_name($params);
+  }
+
+  return $_oauth2_servers[$class_name];
+}
+
+/**
+ * Get an OAuth2.0 client-side instance with given node id.
+ *
+ * @param $nid
+ *   The node id of target OAuth2.0 client-side class setup.
+ * @param $params
+ *   (optional) Additional parameters to pass to class construct.
+ *
+ * @return
+ *   The OAuth2.0 client-side instance based on $nid.
+ */
+function oauth2_get_client($nid, $params = array()) {
+  static $_oauth2_clients;
+
+  if (!isset($_oauth2_clients[$nid]) || !$_oauth2_clients[$nid] instanceof DrupalOAuth2Client) {
+    $info = (array) node_load($nid);
+    $params = array_merge($info, $params);
+    $_oauth2_clients[$nid] = new DrupalOAuth2Client($params);
+  }
+
+  return $_oauth2_clients[$nid];
+}

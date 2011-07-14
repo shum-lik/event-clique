@@ -1,0 +1,7 @@
+<?php
+// $Id: oauth2_resource_server.module,v 1.1 2011/01/25 09:27:08 hswong3i Exp $
+
+/**
+ * @file
+ * Dummy package for enabling OAuth2.0 resource server functionality.
+ */

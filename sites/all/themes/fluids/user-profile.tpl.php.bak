@@ -1,0 +1,24 @@
+<div id="afterSigninWrap">
+<dl>
+	<dd class="select"><a title="Profile" href="#">Profile</a></dd>
+</dl>
+<blockquote>
+    <?php
+	  $imgSrc = base_path().$account->picture;
+	  if($account->picture==NULL){
+	    $imgSrc = base_path().path_to_theme().'/img/profilePhoto.jpg';
+	  }
+	?>
+	<img src="<?php print $imgSrc ?>" alt="<?php print $account->name ?>" />
+	<ul>
+		<li>
+			<p>E-mail:</p>
+			<p>User Name:</p>
+		</li>
+		<li>
+			<p><?php print $account->mail ?></p>
+			<p><?php print $account->name ?></p>
+		</li>
+	</ul>
+</blockquote>
+</div>

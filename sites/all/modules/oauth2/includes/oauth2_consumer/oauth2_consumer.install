@@ -1,0 +1,69 @@
+<?php
+// $Id: oauth2_consumer.install,v 1.1 2011/01/25 09:27:08 hswong3i Exp $
+
+/**
+ * @file
+ * OAuth2.0 Consumer Support install and uninstall code.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function oauth2_consumer_install() {
+  drupal_install_schema('oauth2_consumer');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function oauth2_consumer_uninstall() {
+  drupal_uninstall_schema('oauth2_consumer');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function oauth2_consumer_schema() {
+  $schema = array();
+
+  $schema['oauth2_consumers']  = array(
+    'description' => t('Stores information about OAuth2.0 consumers.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The primary identifier for a node.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'vid' => array(
+        'description' => 'The current {node_revisions}.vid version identifier.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'services_uri' => array(
+        'description' => t('The remote server\'s HTTP endpoint capable of Drupal Service 3.x services. Absolute path or path relative to base URI.'),
+        'type' => 'text',
+      ),
+      'expires_in' => array(
+        'description' => 'How long will OAuth2.0 cache query result within local cache. With a long cache lifetime can greatly reduce the loading of remote OAuth2.0 authorization server; by the way with a short cache lifetime can ensure the synchronize of access_token. To disable cache functionality, simply set this as 0.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'description' => 'A serialized array of name value pairs that are related to the consumer username and password.',
+      ),
+    ),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+  );
+
+  return $schema;
+}
